@@ -2191,20 +2191,27 @@ function drawHarianTab(){
 }
 
 /* --- SALES ROUTE MAP TAB --- */
-let rSales=null, routeMap=null, rFrom='', rTo='';
+let rSales=null, routeMap=null, rFrom='', rTo='', rMonthSel='';
 function drawPetaTab(){
   // default to first sales that has data
   const withData=[...new Map(mgrData.map(v=>[v.username,v.salesName])).entries()];
   if(rSales===null) rSales = withData.length?withData[0][0]:'';
   const isAll = rSales==='ALL';
+  const todayStr = ymd(new Date());
   const pakaiRentang = !!(rFrom && rTo);
+  const pakaiBulan = !pakaiRentang && !!rMonthSel;
+  const pakaiHariIni = !pakaiRentang && !pakaiBulan;
   const inRange=(d)=>{ if(rFrom && d < rFrom) return false; if(rTo && d > rTo) return false; return true; };
   const monthVisits=mgrData.filter(v=>{
-    const cocokPeriode = pakaiRentang ? inRange(v.date) : v.date.startsWith(mgrMonth);
-    return cocokPeriode && (isAll || !rSales || v.username===rSales);
+    let cocok;
+    if(pakaiRentang) cocok = inRange(v.date);
+    else if(pakaiBulan) cocok = v.date.startsWith(rMonthSel);
+    else cocok = (v.date===todayStr);
+    return cocok && (isAll || !rSales || v.username===rSales);
   }).sort((a,b)=>a.ts-b.ts);
   const fmtTgl=(iso)=>{ const [y,m,d]=iso.split('-'); return `${d} ${BULAN[+m-1]} ${y}`; };
-  const monthLabel = pakaiRentang ? `${fmtTgl(rFrom)} – ${fmtTgl(rTo)}` : `${BULAN[+mgrMonth.split('-')[1]-1]} ${mgrMonth.split('-')[0]}`;
+  const monthLabel = pakaiRentang ? `${fmtTgl(rFrom)} – ${fmtTgl(rTo)}`
+    : (pakaiBulan ? `${BULAN[+rMonthSel.split('-')[1]-1]} ${rMonthSel.split('-')[0]}` : `Hari ini · ${fmtTgl(todayStr)}`);
   const days=new Set(monthVisits.map(v=>v.date)).size;
   const nSalesAktif=new Set(monthVisits.map(v=>v.username)).size;
   const selName=isAll?'Semua sales':(rSales?(withData.find(([u])=>u===rSales)||['',''])[1]:'Semua sales');
@@ -2213,33 +2220,36 @@ function drawPetaTab(){
   b.innerHTML=`
     <div class="toolbar">
       <label class="fld"><span class="lbl">Sales</span><select id="rSales"><option value="ALL" ${isAll?'selected':''}>🌐 SEMUA SALES</option>${withData.map(([u,n])=>`<option value="${u}" ${rSales===u?'selected':''}>${esc(n)}</option>`).join('')}</select></label>
-      <label class="fld"><span class="lbl">Bulan</span><input type="month" id="rMonth" value="${pakaiRentang?'':mgrMonth}" style="width:150px;padding:9px 11px;border:1.5px solid var(--line);border-radius:10px"></label>
       <label class="fld"><span class="lbl">Dari tanggal</span><input type="date" id="rFrom" value="${rFrom}" style="width:150px;padding:9px 11px;border:1.5px solid var(--line);border-radius:10px"></label>
       <label class="fld"><span class="lbl">Sampai tanggal</span><input type="date" id="rTo" value="${rTo}" style="width:150px;padding:9px 11px;border:1.5px solid var(--line);border-radius:10px"></label>
-      ${pakaiRentang?`<button class="btn outline sm" id="rClear">Reset periode</button>`:''}
+      <label class="fld"><span class="lbl">Atau bulan</span><input type="month" id="rMonth" value="${rMonthSel}" style="width:150px;padding:9px 11px;border:1.5px solid var(--line);border-radius:10px"></label>
+      ${pakaiHariIni?'':`<button class="btn outline sm" id="rClear">Hari ini</button>`}
     </div>
+    <div class="periode-info no-print">${pakaiHariIni
+      ? `Menampilkan GPS <b>hari ini</b> untuk ${isAll?'semua sales':'sales terpilih'} — isi Dari & Sampai tanggal (atau pilih bulan) untuk periode lain.`
+      : `Menampilkan periode <b>${monthLabel}</b>`}</div>
     <div class="card">
       <p class="section-eyebrow">Peta Rute Sales</p>
       <h2>${esc(selName)} — ${monthLabel}</h2>
       <p class="sub">${isAll
         ? `Sebaran titik kunjungan <b>semua sales</b> — tiap sales warnanya berbeda. Berguna melihat wilayah mana yang belum terjangkau. ${monthVisits.length} titik · ${nSalesAktif} sales aktif.`
-        : `Titik koordinat setiap kunjungan (urut waktu). Garis menunjukkan pergerakan sales pada periode ini. ${monthVisits.length} titik · ${days} hari aktif.`}</p>
+        : `Titik koordinat setiap kunjungan (urut waktu). Garis menunjukkan pergerakan sales. ${monthVisits.length} titik · ${days} hari aktif.`}</p>
       <div class="map-tools">${isAll?'':`<button class="btn ghost sm" id="btnGmapsRoute">🗺️ Buka rute di Google Maps</button>`}</div>
       <div id="routeMap"></div>
       <div class="route-legend" id="routeLegend"></div>
     </div>`;
 
   $('#rSales').onchange=e=>{ rSales=e.target.value; drawPetaTab(); };
-  $('#rMonth').onchange=e=>{ mgrMonth=e.target.value; rFrom=''; rTo=''; drawPetaTab(); };
+  $('#rMonth').onchange=e=>{ rMonthSel=e.target.value; rFrom=''; rTo=''; drawPetaTab(); };
   const rf=$('#rFrom'), rt=$('#rTo');
   const applyRange=()=>{
     const f=rf.value, t=rt.value;
     if(f && t && f>t){ toast('Tanggal "Dari" harus sebelum "Sampai"',false); return; }
-    rFrom=f; rTo=t; drawPetaTab();
+    rFrom=f; rTo=t; rMonthSel=''; drawPetaTab();
   };
   if(rf) rf.onchange=applyRange;
   if(rt) rt.onchange=applyRange;
-  const rc=$('#rClear'); if(rc) rc.onclick=()=>{ rFrom=''; rTo=''; drawPetaTab(); };
+  const rc=$('#rClear'); if(rc) rc.onclick=()=>{ rFrom=''; rTo=''; rMonthSel=''; drawPetaTab(); };
 
   const gbtn=$('#btnGmapsRoute');
   if(gbtn) gbtn.onclick=()=>{
