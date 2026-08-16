@@ -2514,7 +2514,7 @@ async function drawTempoTab(){
         <td>${r.pakaiFaktur?`<span class="badge-faktur">FAKTUR</span><div class="pic-line">${esc(r.namaPerusahaan||'')}${r.namaDirektur?' · '+esc(r.namaDirektur):''}</div>`:'—'}</td>
         <td class="note-cell">${esc(r.alamatToko||'')}</td>
         <td class="note-cell">${esc(r.alamatPenagihan||'')}</td>
-        <td>${r.lokasiMaps?`<a class="mini-map" href="${r.lokasiMaps}" target="_blank" rel="noopener">���� Maps</a>`:'—'}</td>
+        <td>${r.lokasiMaps?`<a class="mini-map" href="${r.lokasiMaps}" target="_blank" rel="noopener">📍 Maps</a>`:'—'}</td>
         <td>${ph.length?ph.map(u=>`<img class="tbl-thumb" src="${u}" data-full="${u}">`).join(' '):'—'}</td>
         <td class="note-cell">${esc(r.note||'')}</td>
         <td class="act-cell no-print">
