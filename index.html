@@ -440,7 +440,7 @@ async function qSync(){
 async function updateQueueBadge(){
   let n=0; try{ n=(await qAll()).length; }catch(_){}
   document.querySelectorAll('.queue-badge').forEach(el=>{
-    if(n>0){ el.hidden=false; el.textContent=`⏳ ${n} ${n===1?'data':'data'} menunggu terkirim — akan otomatis dikirim saat server tersambung`; }
+    if(n>0){ el.hidden=false; el.textContent=`⏳ ${n} ${n===1?'data':'data'} menunggu terkirim ��� akan otomatis dikirim saat server tersambung`; }
     else el.hidden=true;
   });
   return n;
