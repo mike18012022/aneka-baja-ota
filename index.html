@@ -2273,7 +2273,7 @@ function drawPetaTab(){
   // build map
   if(routeMap){ routeMap.remove(); routeMap=null; }
   if(typeof L==='undefined'){ $('#routeMap').innerHTML='<div class="empty">Peta gagal dimuat (perlu koneksi internet).</div>'; return; }
-  if(!monthVisits.length){ $('#routeMap').innerHTML='<div class="empty"><span class="ic">���️</span>Belum ada titik kunjungan bulan ini.</div>'; return; }
+  if(!monthVisits.length){ $('#routeMap').innerHTML='<div class="empty"><span class="ic">🗺️</span>Belum ada titik kunjungan bulan ini.</div>'; return; }
 
   setTimeout(()=>{
     routeMap=L.map('routeMap',{scrollWheelZoom:false});
