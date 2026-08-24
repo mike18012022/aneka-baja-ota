@@ -2588,7 +2588,7 @@ async function drawTempoTab(){
 /* --- Lightbox --- */
 function lightbox(src){
   const el=document.createElement('div'); el.className='lightbox';
-  el.innerHTML=`<span class="x">���</span><img src="${src}">`;
+  el.innerHTML=`<span class="x">✕</span><img src="${src}">`;
   el.onclick=()=>el.remove();
   document.body.appendChild(el);
 }
