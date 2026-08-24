@@ -2522,7 +2522,7 @@ async function drawTempoTab(){
           <button class="mini-btn t-share" data-id="${r.id}">📤 Bagikan</button>
           ${isAdmin()?`<button class="mini-btn t-edit" data-id="${r.id}">✏️ Edit</button>`:''}
         </td>
-      </tr>`;}).join('')}</tbody></table></div>`:'<div class="empty"><span class="ic">📝</span>Belum ada pengajuan tempo.</div>'}`;
+      </tr>`;}).join('')}</tbody></table></div>`:'<div class="empty"><span class="ic">���</span>Belum ada pengajuan tempo.</div>'}`;
   document.querySelectorAll('.tbl-thumb').forEach(img=>img.onclick=()=>lightbox(img.dataset.full));
 
   const pdfUrlOf=(r)=> r.pdfLaporan ? `${PB}/api/files/tempo/${r.id}/${r.pdfLaporan}` : '';
