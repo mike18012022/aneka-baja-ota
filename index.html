@@ -2276,9 +2276,9 @@ function drawPetaTab(){
   if(!monthVisits.length){ $('#routeMap').innerHTML='<div class="empty"><span class="ic">🗺️</span>Belum ada titik kunjungan bulan ini.</div>'; return; }
 
   setTimeout(()=>{
-    routeMap=L.map('routeMap',{scrollWheelZoom:false});
-    const petaJalan=L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png',
-      {maxZoom:20,subdomains:'abcd',attribution:'© OpenStreetMap © CARTO'});
+    routeMap=L.map('routeMap',{scrollWheelZoom:false,maxZoom:19});
+    const petaJalan=L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png',
+      {maxZoom:19,attribution:'© OpenStreetMap contributors'});
     const petaSatelit=L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}',
       {maxZoom:19,attribution:'© Esri'});
     petaJalan.addTo(routeMap);
