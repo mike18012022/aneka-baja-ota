@@ -497,7 +497,7 @@ function mapVisit(r){
   return {
     id:r.id, ts:t.getTime(),
     username:r.sales,
-    salesName:(r.expand && r.expand.sales && r.expand.sales.name) || '��',
+    salesName:(r.expand && r.expand.sales && r.expand.sales.name) || '—',
     toko:r.toko||'', tokoId:r.tokoId||'', telp:r.telp||'', tokoBaru:!!r.tokoBaru, barangDijual:r.barangDijual||'', picNama:r.picNama||'', picTelp:r.picTelp||'', picJabatan:r.picJabatan||'', prospek:r.prospek||'', kategori:r.kategori||'Toko', note:r.note||'',
     lat:r.lat, lng:r.lng, acc:r.acc,
     photo: fileUrl(r,'photo'),
