@@ -1863,12 +1863,14 @@ function buildAbsensiSheets(allRows){
   const dayRows=Object.values(byKey).sort((a,b)=> a.sales.localeCompare(b.sales) || a.date.localeCompare(b.date));
   const detail=dayRows.map(r=>{
     const d=new Date(r.date+'T00:00:00');
+    const libur=d.getDay()===0; // Minggu = toko libur, tidak dihitung absensi
     return { Tanggal:r.date, Hari:HARI[d.getDay()], Sales:r.sales, 'Jumlah Tempat Dikunjungi':r.count,
-      Status: r.count>=ABSEN_MIN_TEMPAT?'Hadir':'Tidak Masuk' };
+      Status: libur?'Libur':(r.count>=ABSEN_MIN_TEMPAT?'Hadir':'Tidak Masuk') };
   });
-  // monthly summary per sales+month
+  // monthly summary per sales+month (Minggu tidak dihitung — toko libur)
   const bySumKey={};
   dayRows.forEach(r=>{
+    if(new Date(r.date+'T00:00:00').getDay()===0) return;
     const bulan=r.date.slice(0,7); // YYYY-MM
     const key=r.username+'|'+bulan;
     if(!bySumKey[key]) bySumKey[key]={sales:r.sales, bulan, hadir:0, tidak:0, total:0};
@@ -2012,17 +2014,19 @@ async function exportExcel(fSales,fDate,fMonth,dFrom,dTo){
       g.height=20;
     }
     const d=new Date(r.date+'T00:00:00');
+    const libur=d.getDay()===0; // Minggu = toko libur, tidak dihitung absensi
     const hadir=r.count>=ABSEN_MIN_TEMPAT;
-    const row=wsD.addRow(['', r.date, HARI[d.getDay()], r.count, hadir?'Hadir':'Tidak Masuk']);
+    const row=wsD.addRow(['', r.date, HARI[d.getDay()], r.count, libur?'Libur':(hadir?'Hadir':'Tidak Masuk')]);
     row.eachCell({includeEmpty:true},c=>{ c.border=BORDER; });
     row.getCell(4).alignment={horizontal:'center'};
     row.getCell(5).alignment={horizontal:'center'};
-    row.getCell(5).font={bold:true,color:{argb: hadir?'FF1F8F4E':'FFC0392B'}};
-    row.getCell(5).fill={type:'pattern',pattern:'solid',fgColor:{argb: hadir?'FFE8F6EE':'FFFDECEA'}};
+    row.getCell(5).font={bold:true,color:{argb: libur?'FF6B7280':(hadir?'FF1F8F4E':'FFC0392B')}};
+    row.getCell(5).fill={type:'pattern',pattern:'solid',fgColor:{argb: libur?'FFF3F4F6':(hadir?'FFE8F6EE':'FFFDECEA')}};
   });
 
   const bySum={};
   dayRows.forEach(r=>{
+    if(new Date(r.date+'T00:00:00').getDay()===0) return; // Minggu tidak dihitung — toko libur
     const bulan=r.date.slice(0,7);
     const k=r.username+'|'+bulan;
     if(!bySum[k]) bySum[k]={sales:r.sales, bulan, hadir:0, tidak:0, total:0};
@@ -2059,7 +2063,7 @@ async function exportExcel(fSales,fDate,fMonth,dFrom,dTo){
     row.getCell(6).alignment={horizontal:'center'};
   });
   wsS.addRow([]);
-  const note=wsS.addRow([`Aturan: kunjungan ≥ ${ABSEN_MIN_TEMPAT} tempat dalam sehari = Hadir; kurang dari itu = Tidak Masuk.`]);
+  const note=wsS.addRow([`Aturan: kunjungan ≥ ${ABSEN_MIN_TEMPAT} tempat dalam sehari = Hadir; kurang dari itu = Tidak Masuk. Absensi dihitung Senin–Sabtu; hari Minggu tidak dihitung (toko libur).`]);
   note.getCell(1).font={italic:true,size:10,color:{argb:'FF666666'}};
   wsS.mergeCells(note.number,1,note.number,6);
 
