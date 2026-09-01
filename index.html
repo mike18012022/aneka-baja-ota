@@ -1223,7 +1223,7 @@ function bindTempo(){
 /* =========================================================
    MANAGER VIEW
 ========================================================= */
-let mgrTab='data', mgrData=[], mgrMonth=null, chartA=null, chartB=null;
+let mgrTab='data', mgrData=[], mgrMonth=null, chartA=null, chartB=null, chartC=null;
 
 async function renderManager(){
   const now=new Date();
@@ -2101,6 +2101,27 @@ function drawRekapTab(){
     dailyTotals.push(lineVisits.filter(v=>v.date===key).length);
   }
 
+  // jam kerja per sales per hari: absen toko pertama s.d. toko terakhir
+  const PALET_JAM=['#FF6A2B','#1F77B4','#2CA02C','#9467BD','#D62728','#8C564B','#E377C2','#0FA3A3','#B8860B','#7F7F7F'];
+  const byJam={};
+  monthVisits.forEach(v=>{
+    if(!byJam[v.username]) byJam[v.username]={name:v.salesName, days:{}};
+    const o=byJam[v.username].days;
+    if(!o[v.date]) o[v.date]={min:v.ts,max:v.ts};
+    else{ if(v.ts<o[v.date].min)o[v.date].min=v.ts; if(v.ts>o[v.date].max)o[v.date].max=v.ts; }
+  });
+  const jamDatasets=Object.values(byJam).sort((a,b)=>(a.name||'').localeCompare(b.name||'')).map((s,i)=>{
+    const data=[], meta=[];
+    for(let d=1;d<=daysInMonth;d++){
+      const key=`${mgrMonth}-${String(d).padStart(2,'0')}`;
+      const rec=s.days[key];
+      if(rec){ data.push(+(((rec.max-rec.min)/3600000)).toFixed(2)); meta.push(rec); }
+      else{ data.push(null); meta.push(null); }
+    }
+    const warna=PALET_JAM[i%PALET_JAM.length];
+    return {label:s.name, data, meta, borderColor:warna, backgroundColor:warna, tension:.25, spanGaps:false, pointRadius:3, pointHoverRadius:5, borderWidth:2, fill:false};
+  });
+
   const b=$('#mgrTabBody');
   b.innerHTML=`
     <div class="toolbar no-print">
@@ -2131,13 +2152,18 @@ function drawRekapTab(){
         <div class="chart-box"><h3>Total kunjungan per sales — ${monthLabel}</h3><canvas id="chartSales"></canvas></div>
         <div class="chart-box"><h3>Grafik harian ${selName?'· '+esc(selName):'(semua sales)'} — ${monthLabel}</h3><canvas id="chartDaily"></canvas></div>
       </div>
+
+      <div class="chart-box" style="margin-top:16px">
+        <h3>Jam kerja per sales — ${monthLabel} <span style="font-weight:400;color:var(--muted);font-size:12px">(absen toko pertama → toko terakhir tiap hari)</span></h3>
+        <canvas id="chartJam" style="max-height:320px"></canvas>
+      </div>
     </div>`;
 
   $('#mMonth').onchange=e=>{ mgrMonth=e.target.value; drawManager(); };
   $('#mSales').onchange=e=>{ mRekapSales=e.target.value; drawRekapTab(); };
   $('#btnPrint').onclick=()=>window.print();
 
-  if(chartA) chartA.destroy(); if(chartB) chartB.destroy();
+  if(chartA) chartA.destroy(); if(chartB) chartB.destroy(); if(chartC) chartC.destroy();
   const grid='#EEF1F5', signal='#FF6A2B';
   chartA=new Chart($('#chartSales'),{
     type:'bar',
@@ -2148,6 +2174,31 @@ function drawRekapTab(){
     type:'line',
     data:{labels:dailyLabels,datasets:[{data:dailyTotals,borderColor:'#10141B',backgroundColor:'rgba(255,106,43,.14)',fill:true,tension:.3,pointRadius:2,pointBackgroundColor:signal,borderWidth:2}]},
     options:{responsive:true,plugins:{legend:{display:false}},scales:{y:{beginAtZero:true,ticks:{precision:0},grid:{color:grid}},x:{grid:{display:false},ticks:{maxTicksLimit:15}}}}
+  });
+  chartC=new Chart($('#chartJam'),{
+    type:'line',
+    data:{labels:dailyLabels,datasets:jamDatasets},
+    options:{
+      responsive:true,
+      interaction:{mode:'nearest',intersect:false},
+      plugins:{
+        legend:{display:true,position:'bottom',labels:{boxWidth:12,boxHeight:12,usePointStyle:true}},
+        tooltip:{callbacks:{
+          title:items=>items.length?`Tanggal ${items[0].label} ${monthLabel}`:'',
+          label:ctx=>{
+            const m=ctx.dataset.meta[ctx.dataIndex];
+            if(!m) return `${ctx.dataset.label}: —`;
+            const j=ctx.parsed.y;
+            const rng=`${fmtJamShort(new Date(m.min))} → ${fmtJamShort(new Date(m.max))}`;
+            return `${ctx.dataset.label}: ${j} jam (${rng})${j===0?' · hanya 1 kunjungan':''}`;
+          }
+        }}
+      },
+      scales:{
+        y:{beginAtZero:true,title:{display:true,text:'Jam kerja'},grid:{color:grid},ticks:{callback:v=>v+' j'}},
+        x:{grid:{display:false},ticks:{maxTicksLimit:16},title:{display:true,text:'Tanggal'}}
+      }
+    }
   });
 }
 
